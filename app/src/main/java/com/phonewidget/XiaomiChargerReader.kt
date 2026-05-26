@@ -66,78 +66,101 @@ object XiaomiChargerReader {
     fun readSysfs(): SysfsData? {
         // 先检查 power_supply 目录是否存在
         val baseDir = File(POWER_SUPPLY_PATH)
-        if (!baseDir.exists() || !baseDir.isDirectory) return null
+        if (!baseDir.exists() || !baseDir.isDirectory) {
+            // Timber.d("power_supply目录不存在: $POWER_SUPPLY_PATH")
+            return null
+        }
 
         var hasAnyData = false
-        val builder = SysfsData()
+        var currentNowUa: Int? = null
+        var voltageNowUv: Int? = null
+        var temperatureRaw: Int? = null
+        var capacity: Int? = null
+        var chargeType: ChargeType = ChargeType.UNKNOWN
+        var usbVoltageMaxUv: Int? = null
+        var usbCurrentMaxUa: Int? = null
+        var status: String? = null
+        var isPresent: Boolean = false
 
-        // 1. 电池 BMS（最优先，最精确）
-        readIntSysfs("$POWER_SUPPLY_PATH/bms/current_now")?.let {
-            builder.currentNowUa = it; hasAnyData = true
-        }
-        readIntSysfs("$POWER_SUPPLY_PATH/bms/voltage_now")?.let {
-            builder.voltageNowUv = it; hasAnyData = true
-        }
+        // 读取顺序优化：先读最重要的数据
+        val pathsToRead = listOf(
+            // 1. 电池 BMS（最优先，最精确）
+            "$POWER_SUPPLY_PATH/bms/current_now" to { value: Int -> currentNowUa = value },
+            "$POWER_SUPPLY_PATH/bms/voltage_now" to { value: Int -> voltageNowUv = value },
+            
+            // 2. 常规电池节点（BMS 没读到时用这个）
+            "$POWER_SUPPLY_PATH/battery/current_now" to { value: Int -> 
+                if (currentNowUa == null) currentNowUa = value 
+            },
+            "$POWER_SUPPLY_PATH/battery/voltage_now" to { value: Int -> 
+                if (voltageNowUv == null) voltageNowUv = value 
+            },
+            
+            // 3. 温度
+            "$POWER_SUPPLY_PATH/battery/temp" to { value: Int -> temperatureRaw = value },
+            
+            // 4. 电量
+            "$POWER_SUPPLY_PATH/battery/capacity" to { value: Int -> capacity = value },
+            
+            // 5. 小米私有: charge_type
+            "$POWER_SUPPLY_PATH/battery/charge_type" to { value: String -> 
+                chargeType = parseChargeType(value)
+            },
+            
+            // 6. 充电状态
+            "$POWER_SUPPLY_PATH/battery/status" to { value: String -> status = value },
+            
+            // 7. USB 充电器信息
+            "$POWER_SUPPLY_PATH/usb/voltage_max" to { value: Int -> usbVoltageMaxUv = value },
+            "$POWER_SUPPLY_PATH/usb/input_current_max" to { value: Int -> usbCurrentMaxUa = value },
+            "$POWER_SUPPLY_PATH/usb/present" to { value: Int -> isPresent = value == 1 },
+            
+            // 8. 主充电器（备用）
+            "$POWER_SUPPLY_PATH/main/current_now" to { value: Int -> 
+                if (currentNowUa == null) currentNowUa = value 
+            },
+            "$POWER_SUPPLY_PATH/main/voltage_now" to { value: Int -> 
+                if (voltageNowUv == null) voltageNowUv = value 
+            }
+        )
 
-        // 2. 常规电池节点（BMS 没读到时用这个）
-        if (builder.currentNowUa == null) {
-            readIntSysfs("$POWER_SUPPLY_PATH/battery/current_now")?.let {
-                builder.currentNowUa = it; hasAnyData = true
+        // 批量读取文件
+        for ((path, setter) in pathsToRead) {
+            try {
+                if (path.endsWith("charge_type") || path.endsWith("status")) {
+                    readStringSysfs(path)?.let { strValue ->
+                        setter(strValue)
+                        hasAnyData = true
+                    }
+                } else {
+                    readIntSysfs(path)?.let { intValue ->
+                        setter(intValue)
+                        hasAnyData = true
+                    }
+                }
+            } catch (e: Exception) {
+                // 静默失败，继续读取其他文件
+                // Timber.d("读取 $path 失败: ${e.message}")
             }
         }
-        if (builder.voltageNowUv == null) {
-            readIntSysfs("$POWER_SUPPLY_PATH/battery/voltage_now")?.let {
-                builder.voltageNowUv = it; hasAnyData = true
-            }
-        }
 
-        // 3. 温度
-        readIntSysfs("$POWER_SUPPLY_PATH/battery/temp")?.let {
-            builder.temperatureRaw = it; hasAnyData = true
+        return if (hasAnyData) {
+            // Timber.d("成功读取sysfs数据: current=$currentNowUa, voltage=$voltageNowUv, temp=$temperatureRaw")
+            SysfsData(
+                currentNowUa = currentNowUa,
+                voltageNowUv = voltageNowUv,
+                temperatureRaw = temperatureRaw,
+                capacity = capacity,
+                chargeType = chargeType,
+                usbVoltageMaxUv = usbVoltageMaxUv,
+                usbCurrentMaxUa = usbCurrentMaxUa,
+                status = status,
+                isPresent = isPresent
+            )
+        } else {
+            // Timber.d("未读取到任何sysfs数据")
+            null
         }
-
-        // 4. 电量
-        readIntSysfs("$POWER_SUPPLY_PATH/battery/capacity")?.let {
-            builder.capacity = it; hasAnyData = true
-        }
-
-        // 5. 小米私有: charge_type → Turbo / Fast / Normal
-        readStringSysfs("$POWER_SUPPLY_PATH/battery/charge_type")?.let { typeStr ->
-            builder.chargeType = parseChargeType(typeStr)
-            hasAnyData = true
-        }
-
-        // 6. 充电状态
-        readStringSysfs("$POWER_SUPPLY_PATH/battery/status")?.let {
-            builder.status = it; hasAnyData = true
-        }
-
-        // 7. USB 充电器信息（max 值反映协议协商结果）
-        readIntSysfs("$POWER_SUPPLY_PATH/usb/voltage_max")?.let {
-            builder.usbVoltageMaxUv = it; hasAnyData = true
-        }
-        readIntSysfs("$POWER_SUPPLY_PATH/usb/input_current_max")?.let {
-            builder.usbCurrentMaxUa = it; hasAnyData = true
-        }
-
-        // 8. USB 是否接入
-        readIntSysfs("$POWER_SUPPLY_PATH/usb/present")?.let {
-            builder.isPresent = it == 1; hasAnyData = true
-        }
-
-        // 9. 主充电器（备用）
-        if (builder.currentNowUa == null) {
-            readIntSysfs("$POWER_SUPPLY_PATH/main/current_now")?.let {
-                builder.currentNowUa = it; hasAnyData = true
-            }
-        }
-        if (builder.voltageNowUv == null) {
-            readIntSysfs("$POWER_SUPPLY_PATH/main/voltage_now")?.let {
-                builder.voltageNowUv = it; hasAnyData = true
-            }
-        }
-
-        return if (hasAnyData) builder else null
     }
 
     /**

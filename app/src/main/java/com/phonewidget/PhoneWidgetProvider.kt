@@ -29,17 +29,30 @@ class PhoneWidgetProvider : AppWidgetProvider() {
         super.onReceive(context, intent)
 
         // 电池状态变化 → 立即刷新
-        if (intent.action == Intent.ACTION_BATTERY_CHANGED ||
-            intent.action == Intent.ACTION_BATTERY_LOW ||
-            intent.action == Intent.ACTION_POWER_CONNECTED ||
-            intent.action == Intent.ACTION_POWER_DISCONNECTED
+        val action = intent.action
+        if (action == Intent.ACTION_BATTERY_CHANGED ||
+            action == Intent.ACTION_BATTERY_LOW ||
+            action == Intent.ACTION_POWER_CONNECTED ||
+            action == Intent.ACTION_POWER_DISCONNECTED ||
+            action == AppWidgetManager.ACTION_APPWIDGET_UPDATE
         ) {
+            // Timber.d("收到广播: $action")
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val appWidgetIds = appWidgetManager.getAppWidgetIds(
                 ComponentName(context, PhoneWidgetProvider::class.java)
             )
-            for (appWidgetId in appWidgetIds) {
-                updateWidget(context, appWidgetManager, appWidgetId)
+            
+            // 批量更新所有widget
+            if (appWidgetIds.isNotEmpty()) {
+                // Timber.d("更新 ${appWidgetIds.size} 个widget")
+                for (appWidgetId in appWidgetIds) {
+                    try {
+                        updateWidget(context, appWidgetManager, appWidgetId)
+                    } catch (e: Exception) {
+                        // Timber.e(e, "更新widget失败: $appWidgetId")
+                        // 继续更新其他widget
+                    }
+                }
             }
         }
     }

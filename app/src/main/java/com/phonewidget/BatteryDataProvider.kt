@@ -35,15 +35,22 @@ object BatteryDataProvider {
         // 1. 尝试 sysfs（小米机型上可获得更精确的快充数据）
         val sysfsData = XiaomiChargerReader.readSysfs()
         if (sysfsData != null) {
+            // 记录数据来源
+            // Timber.d("使用 sysfs 数据源: $sysfsData")
             return buildFromSysfs(sysfsData)
         }
 
         // 2. 回退到 BatteryManager API
         return try {
-            buildFromApi(context)
+            val apiInfo = buildFromApi(context)
+            // Timber.d("使用 API 数据源: ${apiInfo.dataSource}")
+            apiInfo
         } catch (e: Exception) {
+            // Timber.e(e, "BatteryManager API 调用失败")
             // 3. 最后回退到广播 Intent
-            getBatteryInfoFromIntent(context)
+            val intentInfo = getBatteryInfoFromIntent(context)
+            // Timber.d("使用 Intent 数据源: ${intentInfo.dataSource}")
+            intentInfo
         }
     }
 
