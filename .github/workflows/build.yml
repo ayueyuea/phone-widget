@@ -25,14 +25,11 @@ jobs:
         with:
           gradle-version: 8.9
 
-      - name: Check Gradle version
-        run: gradle --version
+      - name: Build Debug APK
+        run: gradle assembleDebug --no-daemon
 
-      - name: Build APK
-        run: gradle assembleRelease --no-daemon
-
-      - name: Upload APK
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: phone-widget-apk
-          path: app/build/outputs/apk/release/*.apk
+          name: phone-widget-debug
+          path: app/build/outputs/apk/debug/*.apk
