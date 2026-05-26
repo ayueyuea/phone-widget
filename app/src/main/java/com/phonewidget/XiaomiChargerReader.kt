@@ -26,15 +26,15 @@ object XiaomiChargerReader {
 
     /** 从 sysfs 读取的数据快照 */
     data class SysfsData(
-        val currentNowUa: Int? = null,
-        val voltageNowUv: Int? = null,
-        val temperatureRaw: Int? = null,
-        val capacity: Int? = null,
-        val chargeType: ChargeType = ChargeType.UNKNOWN,
-        val usbVoltageMaxUv: Int? = null,
-        val usbCurrentMaxUa: Int? = null,
-        val status: String? = null,
-        val isPresent: Boolean = false
+        var currentNowUa: Int? = null,
+        var voltageNowUv: Int? = null,
+        var temperatureRaw: Int? = null,
+        var capacity: Int? = null,
+        var chargeType: ChargeType = ChargeType.UNKNOWN,
+        var usbVoltageMaxUv: Int? = null,
+        var usbCurrentMaxUa: Int? = null,
+        var status: String? = null,
+        var isPresent: Boolean = false
     )
 
     /**

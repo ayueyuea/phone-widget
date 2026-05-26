@@ -133,12 +133,8 @@ object BatteryDataProvider {
         // 健康
         val health = intent.getIntExtra(BatteryManager.EXTRA_HEALTH, BatteryManager.BATTERY_HEALTH_UNKNOWN)
 
-        // 电流 (API 33+ 广播中包含 EXTRA_CURRENT_NOW，单位 µA)
-        val currentNowUa = if (android.os.Build.VERSION.SDK_INT >= 33) {
-            intent.getIntExtra(BatteryManager.EXTRA_CURRENT_NOW, 0)
-        } else {
-            0
-        }
+        // 电流 — 通过 Intent 的 String key 获取
+        val currentNowUa = intent.getIntExtra("EXTRA_CURRENT_NOW", 0)
         val currentA = currentNowUa / 1_000_000f
 
         // 功率 P(W) = U(V) × I(A)
