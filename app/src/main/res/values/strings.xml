@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">手机状态 Widget</string>
+    <string name="widget_title">📱 手机状态</string>
+    <string name="widget_description">显示电池温度和充电功率</string>
+    <string name="not_charging">🔋 未充电</string>
+</resources>
