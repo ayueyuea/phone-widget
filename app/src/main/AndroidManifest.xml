@@ -15,8 +15,13 @@
         <!-- 占位 Activity（MIUI 需要至少一个 Activity 才识别为已安装应用） -->
         <activity
             android:name=".PlaceholderActivity"
-            android:exported="false"
-            android:theme="@android:style/Theme.NoDisplay" />
+            android:exported="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <!-- 桌面 Widget -->
         <receiver
