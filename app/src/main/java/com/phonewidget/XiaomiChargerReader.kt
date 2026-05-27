@@ -159,7 +159,7 @@ object XiaomiChargerReader {
             watt >= 55f -> "澎湃秒充"
             watt >= 30f -> "Turbo快充"
             watt >= 18f -> "QC/PD快充"
-            watt > 0f   -> "普通充电"
+            watt > 0f   -> "充电中"
             else        -> "未充电"
         }
     }

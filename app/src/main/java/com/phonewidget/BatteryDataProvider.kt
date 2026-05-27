@@ -160,7 +160,7 @@ object BatteryDataProvider {
             level = levelPct,
             health = health,
             chargeType = XiaomiChargerReader.ChargeType.UNKNOWN,
-            chargeProtocol = if (isCharging) "普通充电" else "",
+            chargeProtocol = if (isCharging) "充电中" else "",
             voltage = voltageV,
             current = currentA,
             dataSource = "intent"

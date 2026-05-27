@@ -1,5 +1,6 @@
 package com.phonewidget
 
+import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -34,7 +35,8 @@ class PhoneWidgetProvider : AppWidgetProvider() {
             action == Intent.ACTION_BATTERY_LOW ||
             action == Intent.ACTION_POWER_CONNECTED ||
             action == Intent.ACTION_POWER_DISCONNECTED ||
-            action == AppWidgetManager.ACTION_APPWIDGET_UPDATE
+            action == AppWidgetManager.ACTION_APPWIDGET_UPDATE ||
+            action == AUTO_REFRESH
         ) {
             // Timber.d("收到广播: $action")
             val appWidgetManager = AppWidgetManager.getInstance(context)
@@ -59,13 +61,38 @@ class PhoneWidgetProvider : AppWidgetProvider() {
 
     override fun onEnabled(context: Context) {
         super.onEnabled(context)
+        startAutoRefresh(context)
     }
 
     override fun onDisabled(context: Context) {
         super.onDisabled(context)
+        stopAutoRefresh(context)
     }
 
     companion object {
+        private const val AUTO_REFRESH = "com.phonewidget.AUTO_REFRESH"
+        private const val INTERVAL_MS = 15_000L   // 15秒自动刷新
+
+        private fun startAutoRefresh(context: Context) {
+            try {
+                val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val pi = PendingIntent.getBroadcast(context, 999,
+                    Intent(context, PhoneWidgetProvider::class.java).apply { action = AUTO_REFRESH },
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                    android.os.SystemClock.elapsedRealtime() + INTERVAL_MS, INTERVAL_MS, pi)
+            } catch (_: Exception) {}
+        }
+
+        private fun stopAutoRefresh(context: Context) {
+            try {
+                val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val pi = PendingIntent.getBroadcast(context, 999,
+                    Intent(context, PhoneWidgetProvider::class.java).apply { action = AUTO_REFRESH },
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                am.cancel(pi)
+            } catch (_: Exception) {}
+        }
         /**
          * 刷新单个 Widget 实例
          */
