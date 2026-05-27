@@ -60,15 +60,16 @@
             android:textColor="#FF9800" />
     </LinearLayout>
 
-    <!-- 充电状态 -->
+    <!-- 充电状态（已隐藏） -->
     <TextView
         android:id="@+id/tv_charge_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/not_charging"
+        android:text=""
         android:textSize="14sp"
         android:textColor="#666666"
-        android:layout_marginBottom="1dp" />
+        android:layout_marginBottom="1dp"
+        android:visibility="gone" />
 
     <!-- 电量 -->
     <TextView
