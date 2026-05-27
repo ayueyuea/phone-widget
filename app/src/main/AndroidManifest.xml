@@ -12,14 +12,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PhoneWidget">
 
+        <!-- 占位 Activity（MIUI 需要至少一个 Activity 才识别为已安装应用） -->
+        <activity
+            android:name=".PlaceholderActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.NoDisplay" />
+
         <!-- 桌面 Widget -->
         <receiver
             android:name=".PhoneWidgetProvider"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <!-- 从Android 8.0开始，ACTION_BATTERY_CHANGED是受保护的广播 -->
-                <!-- <action android:name="android.intent.action.BATTERY_CHANGED" /> -->
                 <action android:name="android.intent.action.BATTERY_LOW" />
                 <action android:name="android.intent.action.POWER_CONNECTED" />
                 <action android:name="android.intent.action.POWER_DISCONNECTED" />
