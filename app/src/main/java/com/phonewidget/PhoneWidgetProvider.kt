@@ -71,7 +71,7 @@ class PhoneWidgetProvider : AppWidgetProvider() {
 
     companion object {
         private const val AUTO_REFRESH = "com.phonewidget.AUTO_REFRESH"
-        private const val INTERVAL_MS = 15_000L   // 15秒自动刷新
+        private const val INTERVAL_MS = 5_000L   // 5秒自动刷新
 
         private fun startAutoRefresh(context: Context) {
             try {
@@ -118,24 +118,21 @@ class PhoneWidgetProvider : AppWidgetProvider() {
             views.setTextColor(R.id.tv_temperature, tempColor)
 
             // 4. 显示充电功率和协议
-            if (info.isCharging && info.wattage > 0) {
-                views.setTextViewText(
-                    R.id.tv_wattage,
-                    String.format("%.1fW  %s", info.wattage, formatVoltageCurrent(info))
-                )
-
-                // 协议名称 + 数据来源
-                val protocolLabel = buildProtocolLabel(info)
-                views.setTextViewText(R.id.tv_charge_status, protocolLabel)
-
-                // 功率数字颜色：功率越高颜色越暖
-                val powerColor = when {
-                    info.wattage >= 55f -> Color.parseColor("#E53935") // 澎湃秒充 → 红
-                    info.wattage >= 30f -> Color.parseColor("#FB8C00") // Turbo → 橙
-                    info.wattage >= 18f -> Color.parseColor("#43A047") // 快充 → 绿
-                    else -> Color.parseColor("#757575")                 // 普通 → 灰
+            if (info.isCharging) {
+                if (info.wattage > 0) {
+                    views.setTextViewText(R.id.tv_wattage,
+                        String.format("%.1fW  %s", info.wattage, formatVoltageCurrent(info)))
+                    views.setTextColor(R.id.tv_wattage, when {
+                        info.wattage >= 55f -> Color.parseColor("#E53935")
+                        info.wattage >= 30f -> Color.parseColor("#FB8C00")
+                        info.wattage >= 18f -> Color.parseColor("#43A047")
+                        else -> Color.parseColor("#FF9800")
+                    })
+                } else {
+                    views.setTextViewText(R.id.tv_wattage, "充电中")
+                    views.setTextColor(R.id.tv_wattage, Color.parseColor("#43A047"))
                 }
-                views.setTextColor(R.id.tv_wattage, powerColor)
+                views.setTextViewText(R.id.tv_charge_status, buildProtocolLabel(info))
             } else {
                 views.setTextViewText(R.id.tv_wattage, "--W")
                 views.setTextViewText(R.id.tv_charge_status, getDischargeStatus(info))

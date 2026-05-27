@@ -146,10 +146,8 @@ object BatteryDataProvider {
         // 功率 P(W) = U(V) × I(A)
         val wattage = if (currentNowUa > 0 && voltageMv > 0) {
             voltageV * currentA
-        } else if (isCharging) {
-            // 检测到充电但读不到电流，估算 5W
-            voltageV * 1.0f
         } else {
+            // 读不到电流时，不估算瓦数（避免误把电压显示成功率）
             0f
         }
 
