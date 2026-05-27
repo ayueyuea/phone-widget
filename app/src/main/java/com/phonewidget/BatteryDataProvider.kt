@@ -22,10 +22,14 @@ object BatteryDataProvider {
     )
 
     fun getBatteryInfo(context: Context): BatteryInfo {
-        // 1. 尝试 sysfs（小米私有快充信息）
-        val sysfs = XiaomiChargerReader.readSysfs()
-        if (sysfs != null) {
-            return fromSysfs(sysfs)
+        // 1. 尝试 sysfs（小米私有快充信息）— 捕获异常避免崩溃
+        try {
+            val sysfs = XiaomiChargerReader.readSysfs()
+            if (sysfs != null) {
+                return fromSysfs(sysfs)
+            }
+        } catch (_: Exception) {
+            // sysfs 无权限或路径不存在，静默降级
         }
         // 2. 广播
         return fromIntent(context)

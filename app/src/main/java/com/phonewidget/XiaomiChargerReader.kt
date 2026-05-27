@@ -41,6 +41,14 @@ object XiaomiChargerReader {
      * 尝试从 sysfs 读取充电数据
      */
     fun readSysfs(): SysfsData? {
+        return try {
+            readSysfsInternal()
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun readSysfsInternal(): SysfsData? {
         val baseDir = File(POWER_SUPPLY_PATH)
         if (!baseDir.exists() || !baseDir.isDirectory) return null
 

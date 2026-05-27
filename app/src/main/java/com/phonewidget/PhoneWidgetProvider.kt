@@ -88,38 +88,35 @@ class PhoneWidgetProvider : AppWidgetProvider() {
         }
 
         fun updateWidget(context: Context, manager: AppWidgetManager, id: Int) {
-            val info = BatteryDataProvider.getBatteryInfo(context)
-            val views = RemoteViews(context.packageName, R.layout.widget_layout)
+            try {
+                val info = BatteryDataProvider.getBatteryInfo(context)
+                val views = RemoteViews(context.packageName, R.layout.widget_layout)
 
-            // 温度
-            val tempText = try {
-                String.format("%.1f°C", info.temperature)
-            } catch (e: Exception) { "--.-°C" }
-            views.setTextViewText(R.id.tv_temperature, tempText)
+                val tempText = String.format("%.1f°C", info.temperature)
+                views.setTextViewText(R.id.tv_temperature, tempText)
+                views.setTextViewText(R.id.tv_battery_level, "🔋 ${info.level}%")
 
-            // 电量
-            views.setTextViewText(R.id.tv_battery_level, "🔋 ${info.level}%")
+                if (info.isCharging) {
+                    val wattText = if (info.wattage > 0) String.format("%.1fW", info.wattage) else "充电中"
+                    views.setTextViewText(R.id.tv_wattage, wattText)
+                    views.setTextViewText(R.id.tv_charge_status, info.chargeProtocol.ifEmpty { "充电中" })
+                } else {
+                    views.setTextViewText(R.id.tv_wattage, "--W")
+                    views.setTextViewText(R.id.tv_charge_status, "🔋 未充电")
+                }
 
-            // 充电状态和功率
-            if (info.isCharging) {
-                val wattText = if (info.wattage > 0) String.format("%.1fW", info.wattage) else "充电中"
-                views.setTextViewText(R.id.tv_wattage, wattText)
-                views.setTextViewText(R.id.tv_charge_status, info.chargeProtocol.ifEmpty { "充电中" })
-            } else {
-                views.setTextViewText(R.id.tv_wattage, "--W")
-                views.setTextViewText(R.id.tv_charge_status, "🔋 未充电")
+                val clickIntent = Intent(context, PhoneWidgetProvider::class.java).apply {
+                    action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, intArrayOf(id))
+                }
+                val pi = PendingIntent.getBroadcast(context, id, clickIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                views.setOnClickPendingIntent(R.id.widget_container, pi)
+
+                manager.updateAppWidget(id, views)
+            } catch (e: Exception) {
+                // 即使出错也不影响下一次更新
             }
-
-            // 点击刷新
-            val clickIntent = Intent(context, PhoneWidgetProvider::class.java).apply {
-                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, intArrayOf(id))
-            }
-            val pi = PendingIntent.getBroadcast(context, id, clickIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-            views.setOnClickPendingIntent(R.id.widget_container, pi)
-
-            manager.updateAppWidget(id, views)
         }
     }
 }
