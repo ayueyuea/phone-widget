@@ -20,10 +20,6 @@
     public void onReceive(android.content.Context, android.content.Intent);
 }
 
-# 保留日志相关类（如果使用Timber）
--keep class timber.log.** { *; }
--keep class org.jetbrains.annotations.** { *; }
-
 # 避免混淆枚举
 -keepclassmembers enum * {
     public static **[] values();
