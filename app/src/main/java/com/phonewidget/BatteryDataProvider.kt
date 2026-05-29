@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
+import android.os.Build
 
 /**
  * 电池数据读取封装
@@ -125,16 +126,20 @@ object BatteryDataProvider {
         val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
         val isCharging = plugged != 0
 
-        // 电量
+        // 电量 (scale 防 0 避免除零异常)
         val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0)
         val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100)
-        val levelPct = level * 100 / scale
+        val levelPct = if (scale > 0) level * 100 / scale else 0
 
         // 健康
         val health = intent.getIntExtra(BatteryManager.EXTRA_HEALTH, BatteryManager.BATTERY_HEALTH_UNKNOWN)
 
-        // 电流 — 从 Intent 获取；如果为 0 再尝试 BatteryManager API
-        var currentNowUa = intent.getIntExtra("EXTRA_CURRENT_NOW", 0)
+        // 电流 — 从 Intent 获取（不同 API 级别 key 不同）；如果为 0 再尝试 BatteryManager API
+        var currentNowUa = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getIntExtra(BatteryManager.EXTRA_CURRENT_NOW, 0)
+        } else {
+            intent.getIntExtra("current_now", 0)
+        }
         if (currentNowUa == 0) {
             try {
                 val bm = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager

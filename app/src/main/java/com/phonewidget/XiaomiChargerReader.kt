@@ -129,7 +129,7 @@ object XiaomiChargerReader {
     /**
      * 解析小米 charge_type
      */
-    private fun parseChargeType(raw: String): ChargeType {
+    internal fun parseChargeType(raw: String): ChargeType {
         return when (raw.trim().lowercase()) {
             "turbo" -> ChargeType.TURBO
             "fast" -> ChargeType.FAST
@@ -159,7 +159,7 @@ object XiaomiChargerReader {
             watt >= 55f -> "澎湃秒充"
             watt >= 30f -> "Turbo快充"
             watt >= 18f -> "QC/PD快充"
-            watt > 0f   -> "充电中"
+            watt > 0f   -> "普通充电"
             else        -> "未充电"
         }
     }
