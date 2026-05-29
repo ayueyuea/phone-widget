@@ -22,20 +22,21 @@ class PhoneWidgetProvider : AppWidgetProvider() {
         appWidgetIds: IntArray
     ) {
         for (appWidgetId in appWidgetIds) {
-            updateWidget(context, appWidgetManager, appWidgetId)
+            try {
+                updateWidget(context, appWidgetManager, appWidgetId)
+            } catch (_: Exception) {
+                // 单个 widget 失败不影响其他
+            }
         }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
 
-        // 电池状态变化 → 立即刷新
         val action = intent.action
-        if (action == Intent.ACTION_BATTERY_CHANGED ||
-            action == Intent.ACTION_BATTERY_LOW ||
+        if (action == Intent.ACTION_BATTERY_LOW ||
             action == Intent.ACTION_POWER_CONNECTED ||
             action == Intent.ACTION_POWER_DISCONNECTED ||
-            action == AppWidgetManager.ACTION_APPWIDGET_UPDATE ||
             action == AUTO_REFRESH
         ) {
             // Timber.d("收到广播: $action")
