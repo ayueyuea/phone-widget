@@ -53,11 +53,13 @@
         android:textSize="20sp"
         android:textColor="#888888" />
 
-    <!-- 充电状态（隐藏，仅保留 id 供代码更新显示） -->
+    <!-- 充电状态 -->
     <TextView
         android:id="@+id/tv_charge_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="gone" />
+        android:textSize="14sp"
+        android:textColor="#888888"
+        android:layout_marginTop="2dp" />
 
 </LinearLayout>

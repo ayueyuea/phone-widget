@@ -2,6 +2,8 @@ package com.phonewidget
 
 import android.app.Activity
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.widget.TextView
 import android.widget.LinearLayout
 import android.graphics.Color
@@ -33,5 +35,11 @@ class PlaceholderActivity : Activity() {
         }
 
         setContentView(layout)
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (!isFinishing) {
+                finish()
+            }
+        }, 2000)
     }
 }
